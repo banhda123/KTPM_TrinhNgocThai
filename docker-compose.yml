@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  product-service:
+    build: ./product-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - product-db
+      - kafka
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://product-db:3306/productdb
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+
+  product-db:
+    image: mariadb:10.6
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=productdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - product-db-data:/var/lib/mysql
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+volumes:
+  product-db-data: 
